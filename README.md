@@ -7,3 +7,4 @@ kshuleshov Platform repository
 | kubernetes-intro/web | Web Server image |
 | kubernetes-controllers | Kubernetes controllers |
 | kubernetes-security | Kubernetes security |
+| kubernetes-networks | Kubernetes networks |

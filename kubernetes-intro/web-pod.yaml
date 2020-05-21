@@ -8,6 +8,13 @@ spec:
   containers:
   - name: web
     image: kshuleshov/otus-kuber-2020-04_kubernetes-intro_web
+    livenessProbe:
+      tcpSocket:
+        port: 8000
+    readinessProbe:
+      httpGet:
+        path: /index.html
+        port: 80
     volumeMounts:
     - name: app
       mountPath: /app
