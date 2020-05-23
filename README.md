@@ -52,7 +52,7 @@ kshuleshov Platform repository
 ### Как запустить проект:
  - `kubectl apply -f kubernetes-networks/coredns/`
 ### Как проверить работоспособность:
- - ` nslookup web-svc.default.svc.cluster.local @$(kubectl get svc/coredns-svc-lb -o jsonpath={.status.loadBalancer.ingress[0].ip})`
+ - `nslookup web-svc.default.svc.cluster.local $(kubectl get svc/coredns-svc-lb -o jsonpath={.status.loadBalancer.ingress[0].ip})`
 
 ## Создание Ingress
 ### Как запустить проект:
