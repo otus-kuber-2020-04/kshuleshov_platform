@@ -8,6 +8,7 @@ kshuleshov Platform repository
 | kubernetes-controllers | Kubernetes controllers |
 | kubernetes-security | Kubernetes security |
 | kubernetes-networks | Kubernetes networks |
+| kubernetes-volumes | Kubernetes volumes |
 
 # Kubernetes networks
 ## Добавление проверок Pod
@@ -82,3 +83,32 @@ kshuleshov Platform repository
 ### Как проверить работоспособность:
  - `curl -H 'Host: canary' -H 'x-canary: always' http://$(kubectl get ingress/web -o jsonpath={.status.loadBalancer.ingress[0].ip})/web/index.html`
  - `curl -H 'Host: canary' -H 'x-canary: never' http://$(kubectl get ingress/web -o jsonpath={.status.loadBalancer.ingress[0].ip})/web/index.html`
+
+# Kubernetes volumes
+## Установка и запуск kind
+### Как запустить проект:
+ - `kind create cluster`
+ - `kubectl config use-context kind-kind`
+
+## Применение StatefulSet
+### Как запустить проект:
+ - `kubectl apply -f kubernetes-volumes/minio-statefulset.yaml`
+
+## Применение Headless Service
+### Как запустить проект:
+ - `kubectl apply -f kubernetes-volumes/minio-headless-service.yaml`
+
+## Задание со *
+### Как запустить проект:
+ - `kubectl apply -f kubernetes-volumes/minio-secret.yaml`
+
+## Проверка работы MinIO
+### Как проверить работоспособность:
+ - `kubectl get statefulsets/minio`
+ - `kubectl get pod -l app=minio`
+ - `kubectl get pvc -l app=minio`
+ - `kubectl get pv`
+
+## Удаление кластера
+### Как запустить проект:
+ - `kind delete cluster`
