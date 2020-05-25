@@ -92,11 +92,15 @@ kshuleshov Platform repository
 
 ## Применение StatefulSet
 ### Как запустить проект:
- - `kubectl apply -f minio-statefulset.yaml`
+ - `kubectl apply -f kubernetes-volumes/minio-statefulset.yaml`
 
 ## Применение Headless Service
 ### Как запустить проект:
- - `kubectl apply -f minio-headless-service.yaml`
+ - `kubectl apply -f kubernetes-volumes/minio-headless-service.yaml`
+
+## Задание со *
+### Как запустить проект:
+ - `kubectl apply -f kubernetes-volumes/minio-secret.yaml`
 
 ## Проверка работы MinIO
 ### Как проверить работоспособность:
