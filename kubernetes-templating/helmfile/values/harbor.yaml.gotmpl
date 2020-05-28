@@ -1,0 +1,23 @@
+{{- $domain := .Values.domain }}
+expose:
+  ingress:
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      kubernetes.io/tls-acme: "true"
+      certmanager.k8s.io/cluster-issuer: {{ .Values.issuer }}
+      certmanager.k8s.io/acme-challenge-type: http01
+    hosts:
+      core: harbor.{{ $domain }}
+  tls:
+    secretName: harbor.{{ $domain }}
+
+externalURL: https://harbor.{{ $domain }}
+
+core:
+  secret: "crEPvF3tX4UMgpXk"
+jobservice:
+  secret: "ROP2c44xA2XBWQT6"
+notary:
+  enabled: false
+registry:
+  secret: "VwOPljgorM7AASzs"
