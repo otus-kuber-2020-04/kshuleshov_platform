@@ -9,6 +9,7 @@ kshuleshov Platform repository
 | kubernetes-security | Kubernetes security |
 | kubernetes-networks | Kubernetes networks |
 | kubernetes-volumes | Kubernetes volumes |
+| kubernetes-templating | Kubernetes templating |
 
 # Kubernetes networks
 ## Добавление проверок Pod
@@ -112,3 +113,84 @@ kshuleshov Platform repository
 ## Удаление кластера
 ### Как запустить проект:
  - `kind delete cluster`
+
+# Kubernetes templating
+## Регистрация в Google Cloud Platform
+## Cоздание managed kubernetes кластер в облаке GCP
+## Устанавливаем готовые Helm charts
+### Как запустить проект:
+ - `helm repo add stable https://kubernetes-charts.storage.googleapis.com`
+ - `kubectl create ns nginx-ingress`
+ - `helm upgrade --install nginx-ingress stable/nginx-ingress --wait --namespace=nginx-ingress --version=1.11.1`
+ - `helm repo add jetstack https://charts.jetstack.io`
+ - `kubectl apply -f https://raw.githubusercontent.com/jetstack/cert-manager/release-0.9/deploy/manifests/00-crds.yaml`
+ - `kubectl create ns cert-manager`
+ - `kubectl label namespace cert-manager certmanager.k8s.io/disable-validation="true"`
+ - `helm upgrade --install cert-manager jetstack/cert-manager --wait --namespace=cert-manager --version=0.9.0`
+ - `kubectl apply -f kubernetes-templating/cert-manager/clusterissuer-letsencrypt-production.yaml`
+ - `kubectl create ns chartmuseum`
+ - `helm upgrade --install chartmuseum stable/chartmuseum --wait --namespace=chartmuseum --version=2.3.2 -f kubernetes-templating/chartmuseum/values.yaml`
+
+### Как проверить работоспособность:
+ - `helm version`
+ - `helm repo list`
+ - `helm ls -n nginx-ingress`
+ - `helm ls -n cert-manager`
+ - `helm ls -n chartmuseum`
+ - `curl https://$(kubectl get ingress chartmuseum-chartmuseum -n chartmuseum -o jsonpath={.spec.rules[0].host})`
+
+## chartmuseum | Задание со *
+### Как проверить работоспособность:
+ - `helm pull stable/chartmuseum --version=2.3.2`
+ - `curl --data-binary "@chartmuseum-2.3.2.tgz" https://$(kubectl get ingress chartmuseum-chartmuseum -n chartmuseum -o jsonpath={.spec.rules[0].host})/api/charts`
+ - `helm repo add chartmuseum https://$(kubectl get ingress chartmuseum-chartmuseum -n chartmuseum -o jsonpath={.spec.rules[0].host})`
+ - `helm upgrade --install chartmuseum chartmuseum/chartmuseum --wait --namespace=chartmuseum --version=2.3.2 -f kubernetes-templating/chartmuseum/values.yaml`
+
+## harbor
+### Как запустить проект:
+ - `helm repo add harbor https://helm.goharbor.io`
+ - `kubectl create ns harbor`
+ - `helm upgrade --install harbor harbor/harbor --wait --namespace=harbor --version=1.1.2 -f kubernetes-templating/harbor/values.yaml`
+ - `helm ls -n harbor`
+ - `curl https://$(kubectl get ingress harbor-harbor-ingress -n harbor -o jsonpath={.spec.rules[0].host})`
+
+## Используем helmfile | Задание со *
+### Как запустить проект:
+ - `helmfile -f kubernetes-templating/helmfile/helmfile.yaml apply`
+
+## Создаем свой helm chart
+### Как запустить проект:
+ - `kubectl create ns hipster-shop`
+ - `helm dep update kubernetes-templating/hipster-shop`
+ - `helm upgrade --install hipster-shop kubernetes-templating/hipster-shop --namespace hipster-shop --set frontend.service.NodePort=31234`
+### Как проверить работоспособность:
+ - `gcloud compute firewall-rules create test-node-port --allow tcp:$(kubectl get svc/frontend -n hipster-shop -o jsonpath={.spec.ports[0].nodePort})`
+ - `curl -v http://$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}'):$(kubectl get svc/frontend -n hipster-shop -o jsonpath={.spec.ports[0].nodePort})`
+ - `curl http://$(kubectl get ingress frontend -n hipster-shop -o jsonpath={.spec.rules[0].host})`
+
+## Создаем свой helm chart | Задание со *
+
+## Работа с helm-secrets | Необязательное задание
+### Как запустить проект:
+ - `helm plugin install https://github.com/futuresimple/helm-secrets --version 2.0.2`
+ - `gpg --full-generate-key`
+ - `gpg --export-secret-keys >~/.gnupg/secring.gpg`
+ - `sops -e -i --pgp 158ACCBFA4692234095B409BB88FF45E0911C1DE kubernetes-templating/frontend/secrets.yaml`
+ - `helm dep update kubernetes-templating/hipster-shop`
+ - `helm secrets upgrade --install hipster-shop kubernetes-templating/hipster-shop --namespace hipster-shop -f kubernetes-templating/hipster-shop/secrets.yaml`
+### Как проверить работоспособность:
+ - `gpg -k`
+ - `sops -d kubernetes-templating/frontend/secrets.yaml`
+ - `helm secrets view kubernetes-templating/frontend/secrets.yaml`
+ - `kubectl get secret/secret -n hipster-shop -o jsonpath={.data.visibleKey} | base64 -d`
+
+## Kubecfg
+### Как запустить проект:
+ - `kubecfg update kubernetes-templating/kubecfg/services.jsonnet --namespace hipster-shop`
+### Как проверить работоспособность:
+ - `kubecfg version`
+ - `kubecfg show kubernetes-templating/kubecfg/services.jsonnet`
+
+## Kustomize | Самостоятельное задание
+### Как запустить проект:
+ - `kubectl apply -k kubernetes-templating/kustomize/overrides/hipster-shop-prod/`

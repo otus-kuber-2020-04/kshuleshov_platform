@@ -1,0 +1,33 @@
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    kubernetes.io/tls-acme: "true"
+    certmanager.k8s.io/cluster-issuer: "letsencrypt-production"
+    #certmanager.k8s.io/cluster-issuer: "letsencrypt-staging"
+    certmanager.k8s.io/acme-challenge-type: http01
+  hosts:
+  - name: chartmuseum.35.228.138.157.nip.io
+    path: /
+    tls: true
+    tlsSecret: chartmuseum.35.228.138.157.nip.io
+
+env:
+  open:
+    AUTH_ANONYMOUS_GET: true
+    DISABLE_API: false
+    STORAGE: local
+  #secret:
+    #BASIC_AUTH_USER: curator
+    #BASIC_AUTH_PASS: NorlitErlElAigmaDrogockWydWiWryrydhipfuilbizyafjebCecNeygCoawdec
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 1Mi
+  storageClass: standard
+
+strategy:
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 0
