@@ -250,3 +250,4 @@ https://kopf.readthedocs.io/en/latest/walkthrough/updates/
 
 ### Как проверить работоспособность:
  - `kubectl describe mysqls.otus.homework mysql-instance`
+
