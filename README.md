@@ -10,6 +10,7 @@ kshuleshov Platform repository
 | kubernetes-networks | Kubernetes networks |
 | kubernetes-volumes | Kubernetes volumes |
 | kubernetes-templating | Kubernetes templating |
+| kubernetes-operators | Kubernetes operators |
 
 # Kubernetes networks
 ## Добавление проверок Pod
@@ -194,3 +195,49 @@ kshuleshov Platform repository
 ## Kustomize | Самостоятельное задание
 ### Как запустить проект:
  - `kubectl apply -k kubernetes-templating/kustomize/overrides/hipster-shop-prod/`
+
+# Kubernetes operators
+## Запустите kubernetes кластер в minikube
+### Как запустить проект:
+ - `minikube start --kubernetes-version=v1.16.10`
+## Создаем CRD и CR
+### Как запустить проект:
+ - `kubectl apply -f kubernetes-operators/deploy/crd.yml`
+ - `kubectl apply -f kubernetes-operators/deploy/cr.yml`
+### Как проверить работоспособность:
+ - `kubectl describe mysqls.otus.homework mysql-instance`
+## MySQL контроллер
+### Как запустить проект:
+ - `kubectl apply -f kubernetes-operators/deploy/service-account.yml`
+ - `kubectl apply -f kubernetes-operators/deploy/role.yml`
+ - `kubectl apply -f kubernetes-operators/deploy/role-binding.yml`
+ - `kubectl apply -f kubernetes-operators/deploy/deploy-operator.yml`
+ - ```
+export MYSQLPOD=$(kubectl get pods -l app=mysql-instance -o jsonpath="{.items[*].metadata.name}")
+kubectl exec -it $MYSQLPOD -- mysql -u root -potuspassword -e "CREATE TABLE test ( id smallint unsigned not null auto_increment, name varchar(20) not null, constraint pk_example primary key (id) );" otus-database
+kubectl exec -it $MYSQLPOD -- mysql -potuspassword -e "INSERT INTO test ( id, name ) VALUES ( null, 'some data' );" otus-database
+kubectl exec -it $MYSQLPOD -- mysql -potuspassword -e "INSERT INTO test ( id, name ) VALUES ( null, 'some data-2' );" otus-database
+```
+ - `kubectl delete mysqls.otus.homework mysql-instance`
+ - `kubectl apply -f kubernetes-operators/deploy/cr.yml`
+### Как проверить работоспособность:
+ - `kubectl get pvc`
+ - `kubectl get job`
+   ```
+NAME                         COMPLETIONS   DURATION   AGE
+backup-mysql-instance-job    1/1           2s         35m
+restore-mysql-instance-job   1/1           51s        9m16s
+```
+ - ```
+export MYSQLPOD=$(kubectl get pods -l app=mysql-instance -o jsonpath="{.items[*].metadata.name}")
+kubectl exec -it $MYSQLPOD -- mysql -potuspassword -e "select * from test;" otus-database
+```
+   ```
+mysql: [Warning] Using a password on the command line interface can be insecure.
++----+-------------+
+| id | name        |
++----+-------------+
+|  1 | some data   |
+|  2 | some data-2 |
++----+-------------+
+```
