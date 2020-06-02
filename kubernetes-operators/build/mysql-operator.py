@@ -88,11 +88,14 @@ def mysql_on_create(body, spec, **kwargs):
     # Создаем mysql Deployment:
     api = kubernetes.client.AppsV1Api()
     api.create_namespaced_deployment('default', deployment)
+    message = name + " created"
     # Пытаемся восстановиться из backup
     try:
         api = kubernetes.client.BatchV1Api()
         api.create_namespaced_job('default', restore_job)
+        message += " with restore job"
     except kubernetes.client.rest.ApiException:
+        message += " without restore job"
         pass
 
     # Cоздаем PVC и PV для бэкапов:
@@ -109,6 +112,8 @@ def mysql_on_create(body, spec, **kwargs):
         api.create_namespaced_persistent_volume_claim('default', backup_pvc)
     except kubernetes.client.rest.ApiException:
         pass
+
+    return {'message': message}
 
 
 @kopf.on.delete('otus.homework', 'v1', 'mysqls')

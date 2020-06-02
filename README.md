@@ -243,3 +243,10 @@ mysql: [Warning] Using a password on the command line interface can be insecure.
 |  2 | some data-2 |
 +----+-------------+
 ```
+## Задание со * (1)
+
+https://kopf.readthedocs.io/en/latest/walkthrough/updates/
+> Whatever is returned from any handler, is stored in the object’s status under that handler id (which is the function name by default)
+
+### Как проверить работоспособность:
+ - `kubectl describe mysqls.otus.homework mysql-instance`
