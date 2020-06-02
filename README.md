@@ -212,7 +212,7 @@ kshuleshov Platform repository
  - `kubectl apply -f kubernetes-operators/deploy/role.yml`
  - `kubectl apply -f kubernetes-operators/deploy/role-binding.yml`
  - `kubectl apply -f kubernetes-operators/deploy/deploy-operator.yml`
- - ```
+```
 export MYSQLPOD=$(kubectl get pods -l app=mysql-instance -o jsonpath="{.items[*].metadata.name}")
 kubectl exec -it $MYSQLPOD -- mysql -u root -potuspassword -e "CREATE TABLE test ( id smallint unsigned not null auto_increment, name varchar(20) not null, constraint pk_example primary key (id) );" otus-database
 kubectl exec -it $MYSQLPOD -- mysql -potuspassword -e "INSERT INTO test ( id, name ) VALUES ( null, 'some data' );" otus-database
@@ -223,16 +223,16 @@ kubectl exec -it $MYSQLPOD -- mysql -potuspassword -e "INSERT INTO test ( id, na
 ### Как проверить работоспособность:
  - `kubectl get pvc`
  - `kubectl get job`
-   ```
+```
 NAME                         COMPLETIONS   DURATION   AGE
 backup-mysql-instance-job    1/1           2s         35m
 restore-mysql-instance-job   1/1           51s        9m16s
 ```
- - ```
+```
 export MYSQLPOD=$(kubectl get pods -l app=mysql-instance -o jsonpath="{.items[*].metadata.name}")
 kubectl exec -it $MYSQLPOD -- mysql -potuspassword -e "select * from test;" otus-database
 ```
-   ```
+```
 mysql: [Warning] Using a password on the command line interface can be insecure.
 +----+-------------+
 | id | name        |
