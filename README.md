@@ -11,6 +11,7 @@ kshuleshov Platform repository
 | kubernetes-volumes | Kubernetes volumes |
 | kubernetes-templating | Kubernetes templating |
 | kubernetes-operators | Kubernetes operators |
+| kubernetes-monitoring | Kubernetes monitoring |
 
 # Kubernetes networks
 ## Добавление проверок Pod
@@ -251,4 +252,14 @@ https://kopf.readthedocs.io/en/latest/walkthrough/updates/
 ### Как проверить работоспособность:
  - `kubectl describe mysqls.otus.homework mysql-instance`
 
-
+# Kubernetes monitoring
+## Запустить kubernetes кластер в minikube
+ - `minikube start`
+## Поставить prometheus-operator при помощи helm3
+ - `helm repo add stable https://kubernetes-charts.storage.googleapis.com`
+ - `helm upgrade --install prometheus-operator stable/prometheus-operator --create-namespace --namespace monitoring --version 8.13.12`
+## Создать ресурсы и выполнить запросы
+ - `cd kubernetes-monitoring && ./run.sh`
+## Пример графика
+ - `rate(nginx_http_requests_total[1m])`
+![Sample](kubernetes-monitoring/nginx.png)
