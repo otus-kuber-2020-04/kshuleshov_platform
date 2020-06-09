@@ -12,6 +12,7 @@ kshuleshov Platform repository
 | kubernetes-templating | Kubernetes templating |
 | kubernetes-operators | Kubernetes operators |
 | kubernetes-monitoring | Kubernetes monitoring |
+| kubernetes-logging | Kubernetes logging |
 
 # Kubernetes networks
 ## Добавление проверок Pod
@@ -263,3 +264,56 @@ https://kopf.readthedocs.io/en/latest/walkthrough/updates/
 ## Пример графика
  - `rate(nginx_http_requests_total[1m])`
 ![Sample](kubernetes-monitoring/nginx.png)
+
+# Kubernetes logging
+## Подготовка Kubernetes кластера
+## Установка HipsterShop
+### Как запустить проект:
+ - `kubectl create ns microservices-demo`
+ - `kubectl apply -f https://raw.githubusercontent.com/express42/otus-platform-snippets/master/Module-02/Logging/microservices-demo-without-resources.yaml -n microservices-demo`
+### Как проверить работоспособность:
+ - `kubectl get pods -n microservices-demo -o wide`
+
+## Установка EFK стека | ElasticSearch
+### Как запустить проект:
+ - `helm repo add elastic https://helm.elastic.co`
+ - `kubectl create ns observability`
+ - `helm upgrade --install elasticsearch elastic/elasticsearch --namespace observability -f kubernetes-logging/elasticsearch.values.yaml`
+### Как проверить работоспособность:
+ - `kubectl get pods -n observability -o wide -l chart=elasticsearch`
+
+## Установка nginx-ingress | Самостоятельное задание
+### Как запустить проект:
+ - `helm repo add stable https://kubernetes-charts.storage.googleapis.com`
+ - `kubectl create ns nginx-ingress`
+ - `helm upgrade --install nginx-ingress stable/nginx-ingress --namespace=nginx-ingress --version=1.11.1 -f kubernetes-logging/nginx-ingress.values.yaml`
+### Как проверить работоспособность:
+ - `kubectl get pods -n nginx-ingress -o wide`
+
+## Установка EFK стека | Kibana
+### Как запустить проект:
+ - `helm upgrade --install kibana elastic/kibana --namespace observability -f kubernetes-logging/kibana.values.yaml`
+### Как проверить работоспособность:
+ - `kubectl get pods -n observability -o wide -l release=kibana`
+ - `curl -v kibana.35.228.204.141.xip.io`
+
+## Установка EFK стека | Fluent-bit
+### Как запустить проект:
+ - `helm upgrade --install fluent-bit stable/fluent-bit --namespace observability -f kubernetes-logging/fluent-bit.values.yaml`
+### Как проверить работоспособность:
+ - `kubectl get pods -n observability -o wide -l release=fluent-bit`
+
+## Мониторинг ElasticSearch
+### Как запустить проект:
+ - `helm upgrade --install prometheus-operator stable/prometheus-operator --namespace observability --version 8.13.12 -f kubernetes-logging/prometheus-operator.values.yaml`
+ - `helm upgrade --install elasticsearch-exporter stable/elasticsearch-exporter --namespace=observability --set es.uri=http://elasticsearch-master:9200 --set serviceMonitor.enabled=true`
+### Как проверить работоспособность:
+ - `kubectl get pods --namespace observability -l release=prometheus-operator`
+ - `kubectl get pods --namespace observability -l release=elasticsearch-exporter`
+
+## Loki
+### Как запустить проект:
+ - `helm repo add loki https://grafana.github.io/loki/charts`
+ - `helm upgrade --install loki loki/loki-stack --namespace observability -f kubernetes-logging/loki.values.yaml`
+### Как проверить работоспособность:
+ - `kubectl get pod -n observability -l release=loki`
