@@ -352,7 +352,7 @@ Your release is named vault. To learn more about the release, try:
 
 ## Инициализируем vault
  - `kubectl exec -it vault-0 -- vault operator init --key-shares=1 --key-threshold=1`
-````
+```
 Unseal Key 1: Rt3Luh4DOaMS0AOU9y/iXftpYZYABFqEmXFAt5dhkNY=
 
 Initial Root Token: s.2ifUXGhLwjaBP6xiNm5IYTDn
