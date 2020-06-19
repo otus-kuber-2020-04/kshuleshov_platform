@@ -766,5 +766,5 @@ kubectl apply -f kubernetes-vault/example-k8s-spec.https.yml
 ```
 ### Как проверить работоспособность:
  - `kubectl exec vault-inject-example -ti -- curl -kv https://localhost/index.html`
-![Certificate #1](kubernetes-vault/vault-cert-1.png)
-![Certificate #2](kubernetes-vault/vault-cert-2.png)
+![Certificate 1](kubernetes-vault/vault-cert-1.png)
+![Certificate 2](kubernetes-vault/vault-cert-2.png)
