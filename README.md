@@ -506,6 +506,7 @@ token/         token         auth_token_65b81cf0         token based credentials
  - `export SA_JWT_TOKEN=$(kubectl get secret $VAULT_SA_NAME -o jsonpath="{.data.token}" | base64 --decode; echo)`
  - `export SA_CA_CRT=$(kubectl get secret $VAULT_SA_NAME -o jsonpath="{.data['ca\.crt']}" | base64 --decode; echo)`
  - `export K8S_HOST=$(kubectl cluster-info | grep 'Kubernetes master' | awk '/https/ {print $NF}' | sed 's/\x1b\[[0-9;]*m//g')`
+
 Выражение `sed 's/\x1b\[[0-9;]*m//g'` удаляет из текста цветовые коды ANSI.
 
 ## Запишем конфиг в vault
