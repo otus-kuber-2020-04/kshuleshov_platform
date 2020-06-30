@@ -996,3 +996,13 @@ frontend   Succeeded   0        2020-06-30T14:05:06Z
   Normal   Synced  51s                flagger  Routing all traffic to primary
   Normal   Synced  21s                flagger  Promotion completed! Scaling down frontend.microservices-demo
 ```
+
+## Continuous Integration | Задание со *
+Подготовьте pipeline, который будет содержать следующие стадии:
+ - Сборку Docker образа для каждого из микросервисов
+ - Push данного образа в Docker Hub
+
+Pipeline создан в проекте microservices-demo: https://gitlab.com/kshuleshov/microservices-demo/-/blob/master/.gitlab-ci.yml
+В настройках Settings -> CI/CD определены переменные
+ - DOCKER_REGISTRY_USER
+ - DOCKER_REGISTRY_PASSWORD
