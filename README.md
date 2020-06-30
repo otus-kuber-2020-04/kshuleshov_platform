@@ -14,6 +14,7 @@ kshuleshov Platform repository
 | kubernetes-monitoring | Kubernetes monitoring |
 | kubernetes-logging | Kubernetes logging |
 | kubernetes-vault | Kubernetes vault |
+| kubernetes-gitops| Kubernetes gitops |
 
 # Kubernetes networks
 ## Добавление проверок Pod
@@ -768,3 +769,230 @@ kubectl apply -f kubernetes-vault/example-k8s-spec.https.yml
 ### Как проверить работоспособность:
  - `kubectl exec vault-inject-example -ti -- curl -kv https://localhost/index.html`
 ![Certificate 1](kubernetes-vault/vault-cert-1.png) ![Certificate 2](kubernetes-vault/vault-cert-2.png)
+
+# Kubernetes gitops
+## Подготовка GitLab репозитория https://gitlab.com/kshuleshov/microservices-demo
+```
+git clone https://github.com/GoogleCloudPlatform/microservices-demo
+cd microservices-demo
+git remote add gitlab git@gitlab.com:kshuleshov/microservices-demo.git
+git remote remove origin
+git push gitlab master
+```
+## Создание Helm чартов
+ - `tree -L 1 deploy/charts`
+```
+deploy/charts
+├ adservice
+├ cartservice
+├ checkoutservice
+├ currencyservice
+├ emailservice
+├ frontend
+├ loadgenerator
+├ paymentservice
+├ productcatalogservice
+├ recommendationservice
+└ shippingservice
+```
+## Подготовка Kubernetes кластера
+## Continuous Integration
+### Соберите Docker образы для всех микросервисов и поместите данные образы в Docker Hub
+```
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_adservice
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_cartservice
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_checkoutservice
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_currencyservice
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_emailservice
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_frontend
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_loadgenerator
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_paymentservice
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_productcatalogservice
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_recommendationservice
+docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_shippingservice
+```
+## GitOps
+### Подготовка
+```
+kubectl apply -f https://raw.githubusercontent.com/fluxcd/helm-operator/master/deploy/crds.yaml
+helm repo add fluxcd https://charts.fluxcd.io
+kubectl create namespace flux
+helm upgrade --install flux fluxcd/flux -f kubernetes-gitops/flux.values.yaml --namespace flux
+helm upgrade --install helm-operator fluxcd/helm-operator -f kubernetes-gitops/helm-operator.values.yaml --namespace flux
+fluxctl identity --k8s-fwd-ns flux
+```
+### Проверка
+ - `kubectl get ns microservices-demo`
+ - `kubectl logs -l app=flux -n flux | grep microservices-demo`
+```
+ts=2020-06-30T09:01:37.199263428Z caller=sync.go:605 method=Sync cmd="kubectl apply -f -" took=560.963019ms err=null output="namespace/microservices-demo created"
+```
+### HelmRelease | Проверка
+ - `kubectl get helmrelease -n microservices-demo`
+```
+NAME       RELEASE    PHASE       STATUS     MESSAGE                                                                       AGE
+frontend   frontend   Succeeded   deployed   Release was successful for Helm release 'frontend' in 'microservices-demo'.   100m
+```
+ - `helm list -n microservices-demo`
+```
+NAME            NAMESPACE               REVISION        UPDATED                                 STATUS          CHART                                                                        APP VERSION
+frontend        microservices-demo      1               2020-06-30 11:13:57.13304575 +0000 UTC  deployed        frontend-0.21.0                                                              1.16.0
+```
+### Обновление образа
+ - `docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_frontend:v0.0.2`
+ - `helm history frontend -n microservices-demo`
+```
+REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION
+1               Tue Jun 30 11:13:57 2020        superseded      frontend-0.21.0 1.16.0          Install complete
+2               Tue Jun 30 11:23:41 2020        deployed        frontend-0.21.0 1.16.0          Upgrade complete
+```
+### Обновление Helm chart
+#### Попробуем внести изменения в Helm chart `frontend` и поменять имя `deployment` на `frontend-hipster`
+ - `helm history frontend -n microservices-demo`
+```
+REVISION        UPDATED                         STATUS          CHART           APP VERSION     DESCRIPTION
+1               Tue Jun 30 11:13:57 2020        superseded      frontend-0.21.0 1.16.0          Install complete
+2               Tue Jun 30 11:23:41 2020        superseded      frontend-0.21.0 1.16.0          Upgrade complete
+3               Tue Jun 30 11:30:23 2020        deployed        frontend-0.21.0 1.16.0          Upgrade complete
+```
+ - `kubectl logs -l app=helm-operator -n flux`
+```
+ts=2020-06-30T11:30:23.070775653Z caller=release.go:289 component=release release=frontend targetNamespace=microservices-demo resource=microservices-demo:helmrelease/frontend helmVersion=v3 info="running upgrade" action=upgrade
+ts=2020-06-30T11:30:23.100355917Z caller=helm.go:69 component=helm version=v3 info="preparing upgrade for frontend" targetNamespace=microservices-demo release=frontend
+ts=2020-06-30T11:30:23.552437683Z caller=helm.go:69 component=helm version=v3 info="checking 4 resources for changes" targetNamespace=microservices-demo release=frontend
+ts=2020-06-30T11:30:23.572611302Z caller=helm.go:69 component=helm version=v3 info="Created a new Deployment called \"frontend-hipster\" in microservices-demo\n" targetNamespace=microservices-demo release=frontend
+ts=2020-06-30T11:30:23.622684451Z caller=helm.go:69 component=helm version=v3 info="Deleting \"frontend\" in microservices-demo..." targetNamespace=microservices-demo release=frontend
+ts=2020-06-30T11:30:23.638565761Z caller=helm.go:69 component=helm version=v3 info="updating status for upgraded release for frontend" targetNamespace=microservices-demo release=frontend
+```
+### Самостоятельное задание
+#### Добавьте манифесты HelmRelease для всех микросервисов входящих в состав HipsterShop
+ - `tree -L 1 deploy/releases`
+```
+deploy/releases
+├ adservice.yaml
+├ cartservice.yaml
+├ checkoutservice.yaml
+├ currencyservice.yaml
+├ emailservice.yaml
+├ frontend.yaml
+├ loadgenerator.yaml
+├ paymentservice.yaml
+├ productcatalogservice.yaml
+├ recommendationservice.yaml
+└ shippingservice.yaml
+```
+#### Проверьте, что все микросервисы успешно развернулись в Kubernetes кластере
+ - `kubectl get helmrelease -n microservices-demo`
+```
+NAME                    RELEASE                 PHASE       STATUS     MESSAGE                                                                                    AGE
+adservice               adservice               Succeeded   deployed   Release was successful for Helm release 'adservice' in 'microservices-demo'.               3m35s
+cartservice             cartservice             Succeeded   deployed   Release was successful for Helm release 'cartservice' in 'microservices-demo'.             3m35s
+checkoutservice         checkoutservice         Succeeded   deployed   Release was successful for Helm release 'checkoutservice' in 'microservices-demo'.         3m35s
+currencyservice         currencyservice         Succeeded   deployed   Release was successful for Helm release 'currencyservice' in 'microservices-demo'.         3m35s
+emailservice            emailservice            Succeeded   deployed   Release was successful for Helm release 'emailservice' in 'microservices-demo'.            3m35s
+frontend                frontend                Succeeded   deployed   Release was successful for Helm release 'frontend' in 'microservices-demo'.                145m
+loadgenerator           loadgenerator           Succeeded   deployed   Release was successful for Helm release 'loadgenerator' in 'microservices-demo'.           3m35s
+paymentservice          paymentservice          Succeeded   deployed   Release was successful for Helm release 'paymentservice' in 'microservices-demo'.          3m35s
+productcatalogservice   productcatalogservice   Succeeded   deployed   Release was successful for Helm release 'productcatalogservice' in 'microservices-demo'.   3m35s
+recommendationservice   recommendationservice   Succeeded   deployed   Release was successful for Helm release 'recommendationservice' in 'microservices-demo'.   3m35s
+shippingservice         shippingservice         Succeeded   deployed   Release was successful for Helm release 'shippingservice' in 'microservices-demo'.         3m35s
+```
+## Canary deployments с Flagger и Istio
+### Установка Istio
+```
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.6.3
+bin/istioctl install --set profile=demo
+```
+```
+* Istio core installed
+* Istiod installed
+* Ingress gateways installed
+* Egress gateways installed
+* Addons installed
+* Installation complete 
+```
+### Установка Flagger
+```
+helm repo add flagger https://flagger.app
+kubectl apply -f https://raw.githubusercontent.com/weaveworks/flagger/master/artifacts/flagger/crd.yaml
+helm upgrade --install flagger flagger/flagger \
+--namespace=istio-system \
+--set crd.create=false \
+--set meshProvider=istio \
+--set metricsServer=http://prometheus:9090
+```
+### Istio | Sidecar Injection
+ - `kubectl get ns microservices-demo --show-labels`
+```
+NAME                 STATUS   AGE     LABELS
+microservices-demo   Active   3h20m   fluxcd.io/sync-gc-mark=sha256.jBePVfl3HmiWmyyp9N4t7SDQWHsdkC98Cq8T3p9pJ2k,istio-injection=enabled
+```
+ - `kubectl delete pods --all -n microservices-demo`
+ - `kubectl describe pod -l app=frontend -n microservices-demo`
+```
+  Normal   Pulling    86s   kubelet, gke-cluster-1-default-pool-9051a082-lzbg  Pulling image "docker.io/istio/proxyv2:1.6.3"
+  Normal   Pulled     81s   kubelet, gke-cluster-1-default-pool-9051a082-lzbg  Successfully pulled image "docker.io/istio/proxyv2:1.6.3"
+  Normal   Created    80s   kubelet, gke-cluster-1-default-pool-9051a082-lzbg  Created container istio-proxy
+  Normal   Started    80s   kubelet, gke-cluster-1-default-pool-9051a082-lzbg  Started container istio-proxy
+```
+### Доступ к frontend
+ - `kubectl delete hr frontend -n microservices-demo`
+ - `kubectl get gateway -n microservices-demo`
+```
+NAME               AGE
+frontend           3m32s
+```
+ - `kubectl get vs -n microservices-demo`
+```
+NAME       GATEWAYS     HOSTS   AGE
+frontend   [frontend]   [*]     3m36s
+```
+ - `curl -v http://35.228.59.51`
+### Istio | Самостоятельное задание
+### Flagger | Canary
+ - `kubectl get canary -n microservices-demo`
+```
+NAME       STATUS         WEIGHT   LASTTRANSITIONTIME
+frontend   Initializing   0        2020-06-30T13:16:06Z
+```
+ - `kubectl get pods -n microservices-demo -l app=frontend-primary`
+```
+NAME                                READY   STATUS    RESTARTS   AGE
+frontend-primary-7b6d6f85c5-vv9m9   2/2     Running   0          30s
+```
+ - `docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_frontend:v0.0.3`
+ - `kubectl describe canary frontend -n microservices-demo`
+```
+  Type     Reason  Age                   From     Message
+  ----     ------  ----                  ----     -------
+  Normal   Synced  2m36s                 flagger  New revision detected! Scaling up frontend.microservices-demo
+  Normal   Synced  2m6s                  flagger  Starting canary analysis for frontend.microservices-demo
+  Normal   Synced  2m6s                  flagger  Advance frontend.microservices-demo canary weight 10
+  Warning  Synced  96s                   flagger  Halt advancement no values found for istio metric request-success-rate probably frontend.microservices-demo is not receiving traffic: running query failed: no values found
+  Warning  Synced  66s                   flagger  Rolling back frontend.microservices-demo failed checks threshold reached 1
+```
+### Flagger | Самостоятельное задание
+#### Определите причину неуспешности релиза
+ - Поправлен адрес ingress в loadgenerator
+ - Поправлено имя gateway в canary
+#### Добейтесь успешного выполнения релиза
+ - `docker push kshuleshov/otus-kuber-2020-04_kubernetes-gitlab_frontend:v0.0.4`
+ - `kubectl get canary -n microservices-demo`
+```
+NAME       STATUS      WEIGHT   LASTTRANSITIONTIME
+frontend   Succeeded   0        2020-06-30T14:05:06Z
+```
+ - `kubectl describe canary frontend -n microservices-demo`
+```
+  Type     Reason  Age                   From     Message
+  ----     ------  ----                  ----     -------
+  Normal   Synced  3m21s              flagger  New revision detected! Scaling up frontend.microservices-demo
+  Normal   Synced  2m51s              flagger  Starting canary analysis for frontend.microservices-demo
+  Normal   Synced  2m51s              flagger  Advance frontend.microservices-demo canary weight 10
+  Normal   Synced  2m21s              flagger  Advance frontend.microservices-demo canary weight 20
+  Normal   Synced  111s               flagger  Advance frontend.microservices-demo canary weight 30
+  Normal   Synced  81s                flagger  Copying frontend.microservices-demo template spec to frontend-primary.microservices-demo
+  Normal   Synced  51s                flagger  Routing all traffic to primary
+  Normal   Synced  21s                flagger  Promotion completed! Scaling down frontend.microservices-demo
+```
