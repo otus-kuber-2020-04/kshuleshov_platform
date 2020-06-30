@@ -1006,3 +1006,52 @@ Pipeline создан в проекте microservices-demo: https://gitlab.com/k
 В настройках Settings -> CI/CD определены переменные
  - DOCKER_REGISTRY_USER
  - DOCKER_REGISTRY_PASSWORD
+
+## Установка Istio | Задание со *
+Реализуйте установку Istio альтернативным способом: [Istio operator](https://istio.io/docs/setup/install/standalone-operator/)
+### Как запустить проект:
+```
+curl -L https://istio.io/downloadIstio | sh -
+cd istio-1.6.4
+istioctl manifest generate --set profile=demo | kubectl delete -f -
+istioctl operator init
+kubectl create ns istio-system
+kubectl apply -f - <<EOF
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  namespace: istio-system
+  name: istiocontrolplane
+spec:
+  profile: demo
+EOF
+```
+### Как проверить работоспособность:
+ - `kubectl get svc -n istio-system`
+```
+NAME                        TYPE           CLUSTER-IP    EXTERNAL-IP      PORT(S)                                                                      AGE
+grafana                     ClusterIP      10.4.10.32    <none>           3000/TCP                                                                     92s
+istio-egressgateway         ClusterIP      10.4.6.83     <none>           80/TCP,443/TCP,15443/TCP                                                     97s
+istio-ingressgateway        LoadBalancer   10.4.6.197    35.228.138.157   15020:30097/TCP,80:31620/TCP,443:30153/TCP,31400:32600/TCP,15443:30359/TCP   96s
+istiod                      ClusterIP      10.4.13.115   <none>           15010/TCP,15012/TCP,443/TCP,15014/TCP,53/UDP,853/TCP                         107s
+jaeger-agent                ClusterIP      None          <none>           5775/UDP,6831/UDP,6832/UDP                                                   92s
+jaeger-collector            ClusterIP      10.4.14.131   <none>           14267/TCP,14268/TCP,14250/TCP                                                91s
+jaeger-collector-headless   ClusterIP      None          <none>           14250/TCP                                                                    91s
+jaeger-query                ClusterIP      10.4.6.175    <none>           16686/TCP                                                                    91s
+kiali                       ClusterIP      10.4.11.252   <none>           20001/TCP                                                                    91s
+prometheus                  ClusterIP      10.4.15.18    <none>           9090/TCP                                                                     91s
+tracing                     ClusterIP      10.4.3.6      <none>           80/TCP                                                                       90s
+zipkin                      ClusterIP      10.4.5.133    <none>           9411/TCP                                                                     90s
+```
+ - `kubectl get pods -n istio-system`
+```
+NAME                                    READY   STATUS    RESTARTS   AGE
+flagger-85994f45f8-j6q9p                1/1     Running   0          11h
+grafana-5dc4b4676c-h256v                1/1     Running   0          3m19s
+istio-egressgateway-5db676495d-wmqvt    1/1     Running   0          3m23s
+istio-ingressgateway-69bb66cb4b-lw7j9   1/1     Running   0          3m24s
+istio-tracing-8584b4d7f9-2tklj          1/1     Running   0          3m18s
+istiod-5cdccfd474-txx98                 1/1     Running   0          3m33s
+kiali-6f457f5964-wjjzx                  1/1     Running   0          3m18s
+prometheus-d8b7c5949-vspqj              2/2     Running   0          3m18s
+```
