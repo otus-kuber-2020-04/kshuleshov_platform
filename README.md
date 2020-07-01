@@ -1090,3 +1090,15 @@ https://gitlab.com/kshuleshov/microservices-demo/-/commit/ec7b6c69d313382973ac8e
 
 ### Как проверить работоспособность:
 ![Пример нотификаций](kubernetes-gitops/flagger-slack.png)
+
+## Distributed Tracing | Задание со *
+Установите Jaeger и научитесь собирать трейсы
+
+Jaeger установлен в составе demo-профиля Istio
+ - С sidecar-контейнеров istio-proxy трейсы собираются "из коробки"
+ - Непосредственно с микросервисов трейсы собираются после настройки адреса коллектора:
+
+https://gitlab.com/kshuleshov/microservices-demo/-/commit/5ce1e9378fc7d85eea985f6cebf5d10313d5e48b
+
+### Как проверить работоспособность:
+![Пример трассировки](kubernetes-gitops/jaeger.png)
