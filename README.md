@@ -1055,3 +1055,27 @@ istiod-5cdccfd474-txx98                 1/1     Running   0          3m33s
 kiali-6f457f5964-wjjzx                  1/1     Running   0          3m18s
 prometheus-d8b7c5949-vspqj              2/2     Running   0          3m18s
 ```
+
+## Flagger | Задание со *
+Реализуйте канареечное развертывание для одного из оставшихся микросервисов (adservice)
+### Как проверить работоспособность:
+ - `kubectl get canary adservice -n microservices-demo`
+```
+NAME        STATUS      WEIGHT   LASTTRANSITIONTIME
+adservice   Succeeded   0        2020-07-01T11:35:56Z
+```
+ - `kubectl describe canary adservice -n microservices-demo`
+```
+  Type     Reason  Age                From     Message
+  ----     ------  ----               ----     -------
+  Normal   Synced  4m28s              flagger  New revision detected! Scaling up adservice.microservices-demo
+  Warning  Synced  3m58s              flagger  canary deployment adservice.microservices-demo not ready: waiting for rollout to finish: 0 of 1 updated replicas are available
+  Normal   Synced  3m28s              flagger  Starting canary analysis for adservice.microservices-demo
+  Normal   Synced  3m28s              flagger  Advance adservice.microservices-demo canary weight 10
+  Normal   Synced  2m58s              flagger  Advance adservice.microservices-demo canary weight 20
+  Normal   Synced  2m28s              flagger  Advance adservice.microservices-demo canary weight 30
+  Normal   Synced  118s               flagger  Copying adservice.microservices-demo template spec to adservice-primary.microservices-demo
+  Warning  Synced  89s                flagger  adservice-primary.microservices-demo not ready: waiting for rollout to finish: 1 old replicas are pending termination
+  Normal   Synced  58s                flagger  Routing all traffic to primary
+  Normal   Synced  28s                flagger  Promotion completed! Scaling down adservice.microservices-demo
+```
