@@ -1058,6 +1058,9 @@ prometheus-d8b7c5949-vspqj              2/2     Running   0          3m18s
 
 ## Flagger | Задание со *
 Реализуйте канареечное развертывание для одного из оставшихся микросервисов (adservice)
+
+https://gitlab.com/kshuleshov/microservices-demo/-/compare/2b839069...c66708f7
+
 ### Как проверить работоспособность:
  - `kubectl get canary adservice -n microservices-demo`
 ```
@@ -1079,3 +1082,11 @@ adservice   Succeeded   0        2020-07-01T11:35:56Z
   Normal   Synced  58s                flagger  Routing all traffic to primary
   Normal   Synced  28s                flagger  Promotion completed! Scaling down adservice.microservices-demo
 ```
+
+## Flagger | Задание со *
+Реализуйте получение нотификаций о релизах в Slack
+
+https://gitlab.com/kshuleshov/microservices-demo/-/commit/ec7b6c69d313382973ac8eb5e5fd22f77c3d7999
+
+### Как проверить работоспособность:
+![Пример нотификаций](kubernetes-gitops/flagger-slack.png)
