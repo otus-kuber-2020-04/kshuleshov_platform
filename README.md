@@ -1167,7 +1167,7 @@ storage-pvc   Bound    pvc-4aad71ca-e200-477a-9a7f-f93907e816e0   1Gi        RWO
  - `kubectl apply -f https://raw.githubusercontent.com/aylei/kubectl-debug/dd7e4965e4ae5c4f53e6cf9fd17acc964274ca5c/scripts/agent_daemonset.yml`
 ### Проверьте работу команды strace
  - `kubectl apply -f kubernetes-debug/strace/web-pod.yaml`
- - `kubectl-debug web --agentless=false --port-forward=true
+ - `kubectl-debug web --agentless=false --port-forward=true`
 ```
 strace -c -p1
 ```
@@ -1177,7 +1177,7 @@ strace: attach: ptrace(PTRACE_SEIZE, 1): Operation not permitted
 ### Определите, почему не работает strace и почините
 Агент не устанавливает capabilities "SYS_PTRACE", "SYS_ADMIN". Необходимо обновить агент до последней версии.
  - `kubernetes-debug/strace/run.sh`
- - `kubectl-debug web --agentless=false --port-forward=true
+ - `kubectl-debug web --agentless=false --port-forward=true`
 ```
 strace -c -p1
 ```
@@ -1230,7 +1230,12 @@ Status:
   Status:              Started test
 ```
 ### iptables-tailer | Установка
- - `kubectl apply -f kubernetes-debug/kit`
+```
+kubectl apply -f kubernetes-debug/kit/kit-clusterrole.yaml
+kubectl apply -f kubernetes-debug/kit/kit-clusterrolebinding.yaml
+kubectl apply -f kubernetes-debug/kit/kit-serviceaccount.yaml
+kubectl apply -f kubernetes-debug/kit/iptables-tailer.yaml
+```
 ### iptables-tailes | Проверка
 ```
 kubectl delete -f https://raw.githubusercontent.com/piontec/netperf-operator/master/deploy/cr.yaml
@@ -1246,4 +1251,15 @@ Events:
   Normal   Created     80s   kubelet, gke-cluster-1-default-pool-a3e69bb8-3qm4  Created container netperf-server-fa66f966b976
   Normal   Started     80s   kubelet, gke-cluster-1-default-pool-a3e69bb8-3qm4  Started container netperf-server-fa66f966b976
   Warning  PacketDrop  78s   kube-iptables-tailer                               Packet dropped when receiving traffic from 10.0.1.19
+```
+## Задание со ⭐
+### Исправьте ошибку в нашей сетевой политике, чтобы Netperf снова начал работать
+ - `kubectl apply -f kubernetes-debug/kit/netperf-calico-policy-fixed.yaml`
+### Поправьте манифест DaemonSet из репозитория, чтобы в логах отображались имена Podов, а не их IP-адреса
+```diff
+               - name: "POD_IDENTIFIER"
+-                value: "label"
+-              - name: "POD_IDENTIFIER_LABEL"
+-                value: "netperf-type"
++                value: "name"
 ```
